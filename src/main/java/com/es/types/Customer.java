@@ -1,5 +1,5 @@
 
-package consumer.types;
+package com.es.types;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

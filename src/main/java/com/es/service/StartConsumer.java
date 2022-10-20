@@ -1,15 +1,18 @@
-package com.es.types;
+package com.es.service;
 
+
+import com.es.ElasticSearchQuery;
+import com.es.config.SystemConfig;
+import com.es.types.Customer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import consumer.config.SystemConfig;
-import consumer.elasticSearch.ElasticSearchQuery;
-import consumer.types.Customer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -17,23 +20,19 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static consumer.config.SystemConfig.topicName;
+import static com.es.config.SystemConfig.topicName;
 
+@Component
 public class StartConsumer {
     public void execute() throws IOException {
         ExecutorService executorService = Executors.newFixedThreadPool(2);
         executorService.execute(StartConsumer::getConsumer);
         ElasticSearchQuery query = new ElasticSearchQuery();
-        List<Customer> customers = getConsumer();
-        for (Customer c:customers) {
-            query.addDocument(c);
-        }
-
+        query.bulkInsert();
         executorService.shutdown();
     }
     public static List<Customer> getConsumer(){
         List<Customer> customerList = new ArrayList<>();
-
         Properties consumerProps = SystemConfig.getConsumerProps(true, 1000L);
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
         TopicPartition topicPartition = new TopicPartition(topicName, 0);
@@ -52,7 +51,6 @@ public class StartConsumer {
                     throw new RuntimeException(e);
                 }
                 customerList.add(customer);
-//                System.out.println(employee);
             }
             if (records.isEmpty()) {
                 System.out.println("-- terminating consumer --");
